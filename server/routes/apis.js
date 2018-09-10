@@ -5,7 +5,6 @@ router.post('/translate', function(req, res, next) {
   translate(req.body.text, req.body.format)
     .then(translation => {
       res.send({
-        statusCode: 200,
         text: translation.text
       });
     })

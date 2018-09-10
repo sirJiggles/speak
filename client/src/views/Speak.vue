@@ -1,8 +1,20 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-
     
+    <h1>
+      Input text
+    </h1>
+    <textarea v-model="input" rows="10" cols="60" placeholder="Type some awesome text"></textarea>
+
+    <h2>Output text</h2>
+
+    <textarea v-model="output" rows="10" cols="60" placeholder="get some aweomse result">
+    </textarea>
+      
+    <br />
+    <br />
+
+    <img alt="Vue logo" src="../assets/logo.png" @click="translateThatMothaFooka">
 
     <!-- <SpeakToMe /> -->
   </div>
@@ -19,15 +31,18 @@ import axios from 'axios';
   // }
 })
 export default class Speak extends Vue {
-  public async mounted() {
+  input = '';
+  output = '';
+
+  async translateThatMothaFooka() {
     // connect to the BE and grab the translate response!
     try {
       const results = await axios.post('http://localhost:3000/translate', {
-        text: 'Hey how are you doing',
+        text: this.input,
         format: { from: 'en', to: 'de' }
       });
 
-      console.log(results.data.text);
+      this.output = results.data.text;
     } catch (err) {
       console.log('error from the server', err);
     }
