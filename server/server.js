@@ -3,6 +3,7 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
 
 app.use(express.static('public'));
 
@@ -23,9 +24,31 @@ var apis = require('./routes/apis');
 app.use('/', apis);
 
 io.on('connection', function(socket) {
-  console.log('a user connected');
-  socket.on('chat message', function(msg) {
-    console.log('message: ' + msg);
+  socket.on('chat message', async function(msg) {
+    const postMessage = {
+      query: msg,
+      sessionId: socket.client.id,
+      v: 20150910,
+      lang: 'en-US',
+      name: 'testEventName'
+    };
+
+    try {
+      const response = await fetch('https://api.dialogflow.com/v1/query', {
+        method: 'POST',
+        body: JSON.stringify(postMessage),
+        headers: {
+          Authorization: 'Bearer 963ff2192a68441d88043d032358fef6',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      socket.emit('bot reply', data.result.speech);
+    } catch (err) {
+      console.error(err);
+    }
   });
 });
 

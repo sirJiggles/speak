@@ -2,11 +2,11 @@
   <div class="home">
 
     <h1>
-      Input text
+      Input
     </h1>
     <textarea v-model="input" rows="10" cols="60" placeholder="Type some awesome text"></textarea>
 
-    <h2>Output text</h2>
+    <h2>Output</h2>
 
     <textarea v-model="output" rows="10" cols="60" placeholder="get some aweomse result">
     </textarea>
@@ -24,33 +24,19 @@
     <button @click="translateThatMothaFooka">Translate</button>
 
     <!-- <img alt="Vue logo" src="../assets/logo.png" @click="translateThatMothaFooka"> -->
-
-    <!-- <SpeakToMe /> -->
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-// import SpeakToMe from '@/components/SpeakToMe.vue'; // @ is an alias to /src
 import axios from 'axios';
 
-// import io from 'socket.io-client';
-
-@Component({
-  // components: {
-  //   SpeakToMe
-  // }
-})
+@Component({})
 export default class Speak extends Vue {
   input = '';
   output = '';
   listeningToAudio = false;
   translating = false;
-  // socket = io({
-  //   host: '192.168.0.164',
-  //   hostname: 'localhost',
-  //   port: '8080'
-  // });
 
   // used for speach recognition
   SpeechRecognition = window.SpeechRecognition ||
@@ -59,6 +45,10 @@ export default class Speak extends Vue {
     lang: 'en-US',
     interimResults: false
   });
+
+  // for talking back
+  synth = window.speechSynthesis;
+  utterance = new SpeechSynthesisUtterance();
 
   // get translating() {
   //   return !listeningToAudio
@@ -69,10 +59,20 @@ export default class Speak extends Vue {
   }
 
   public mounted() {
+    this.$socket.on('bot reply', replyText => {
+      this.synthVoice(replyText);
+      this.output = replyText;
+    });
+
+    // talk back lang
+    // this.utterance.lang = 'de-DE';
+
     this.recognition.addEventListener('result', (e: any) => {
       const last = e.results.length - 1;
       const text = e.results[last][0].transcript;
       const confidance = e.results[0][0].confidence;
+
+      this.utterance.lang = 'en-US';
 
       if (confidance > 0.7) {
         // update the input field with what the user wants to send
@@ -104,10 +104,20 @@ export default class Speak extends Vue {
         format: { from: 'en', to: 'de' }
       });
 
+      this.utterance.lang = 'de-DE';
+
       this.output = results.data.text;
+      this.synthVoice(results.data.text);
+
+      // this.$socket.emit('chat message', this.input);
     } catch (err) {
       console.log('error from the server', err);
     }
+  }
+
+  private synthVoice(text: string) {
+    this.utterance.text = text;
+    this.synth.speak(this.utterance);
   }
 }
 </script>
